@@ -3,6 +3,7 @@ mod cursor;
 mod dot;
 mod selection;
 
+use self::assets::materials::{ColorStack, ColorState};
 use self::cursor::CursorPlugin;
 use self::dot::Dot;
 use crate::assets::materials::UIMaterials;
@@ -62,6 +63,9 @@ pub fn setup(mut commands: Commands, dot_mesh: Res<DotMeshHandle>, ui_materials:
                 Dot,
                 Mesh3d(dot_mesh.0.clone()),
                 MeshMaterial3d(ui_materials.dot.clone()),
+                ColorStack {
+                    states: vec![ColorState::Dot],
+                },
                 Transform::from_xyz(
                     i as f32 * step + offset - (step * total_in_row as f32 / 2.),
                     j as f32 * step + offset - (step * total_in_column as f32 / 2.),

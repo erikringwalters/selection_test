@@ -2,14 +2,34 @@ use bevy::prelude::*;
 
 use super::colors::*;
 
+#[derive(Default, Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum ColorState {
+    #[default]
+    Dot,
+    Line,
+    Hover,
+    Selected,
+}
+
 #[derive(Resource, Default)]
 pub struct UIMaterials {
     pub dot: Handle<StandardMaterial>,
     pub line: Handle<StandardMaterial>,
     pub hover: Handle<StandardMaterial>,
-    // pub pressed: Handle<StandardMaterial>,
     pub selected: Handle<StandardMaterial>,
 }
+
+#[derive(Component, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ColorStack {
+    pub states: Vec<ColorState>,
+}
+
+impl ColorStack {
+    pub fn top(&self) -> Option<ColorState> {
+        self.states.last().copied()
+    }
+}
+
 pub struct MaterialsPlugin;
 
 impl Plugin for MaterialsPlugin {
@@ -23,8 +43,6 @@ pub fn setup_ui_materials(mut commands: Commands, mut materials: ResMut<Assets<S
     commands.insert_resource(UIMaterials {
         dot: materials.add(ui_material(color_from_hex(AMBER_ORANGE))),
         line: materials.add(ui_material(color_from_hex(LINE))),
-        // hover: materials.add(color_from_hex(ui_material(HOVER))),
-        // pressed: materials.add(color_from_hex(ui_material(PRESSED))),
         hover: materials.add(ui_material(color_from_hex(COOL_BLUE))),
         selected: materials.add(ui_material(color_from_hex(SAGE_GREEN))),
     });

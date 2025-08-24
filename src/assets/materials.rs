@@ -7,8 +7,9 @@ pub enum ColorState {
     #[default]
     Dot,
     Line,
-    Hover,
+    Hovered,
     Selected,
+    SelectedAndHovered,
 }
 
 #[derive(Resource, Default)]
@@ -17,6 +18,7 @@ pub struct UIMaterials {
     pub line: Handle<StandardMaterial>,
     pub hover: Handle<StandardMaterial>,
     pub selected: Handle<StandardMaterial>,
+    pub selected_and_hovered: Handle<StandardMaterial>,
 }
 
 #[derive(Component, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -45,6 +47,7 @@ pub fn setup_ui_materials(mut commands: Commands, mut materials: ResMut<Assets<S
         line: materials.add(ui_material(color_from_hex(LINE))),
         hover: materials.add(ui_material(color_from_hex(COOL_BLUE))),
         selected: materials.add(ui_material(color_from_hex(SAGE_GREEN))),
+        selected_and_hovered: materials.add(ui_material(color_from_hex(DARK_SAGE))),
     });
 }
 

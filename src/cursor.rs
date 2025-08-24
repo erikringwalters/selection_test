@@ -152,7 +152,7 @@ pub fn select_mesh(
     // Push hover color back to top
     push_color(
         entity,
-        ColorState::Hover,
+        ColorState::SelectedAndHovered,
         &ui_materials,
         &mut material_query,
     );
@@ -185,8 +185,9 @@ pub fn update_material(
         let handle = match top {
             ColorState::Dot => ui_materials.dot.clone(),
             ColorState::Line => ui_materials.line.clone(),
-            ColorState::Hover => ui_materials.hover.clone(),
+            ColorState::Hovered => ui_materials.hover.clone(),
             ColorState::Selected => ui_materials.selected.clone(),
+            ColorState::SelectedAndHovered => ui_materials.selected_and_hovered.clone(),
         };
         material.0 = handle.clone();
     }
@@ -239,26 +240,32 @@ pub fn handle_hover(
 ) {
     // TODO: Rework hovering
 
+    // Still hovering over same entity as previous tick
     if picking.prev_hovered == picking.hovered {
         return;
     }
+
+    // No longer hovering over entity from previous tick
     if picking.prev_hovered != Entity::PLACEHOLDER && picking.prev_hovered != picking.hovered {
-        println!(
-            "Popping - hovered:{:?}, prev_hovered:{:?}",
-            picking.hovered, picking.prev_hovered
-        );
         pop_color(picking.prev_hovered, &ui_materials, &mut material_query);
     }
-    if picking.hovered != Entity::PLACEHOLDER {
-        println!(
-            "Pushing - hovered:{:?}, prev_hovered:{:?}",
-            picking.hovered, picking.prev_hovered
-        );
+
+    // Not hovering over an entity
+    if picking.hovered == Entity::PLACEHOLDER {
+        return;
+    }
+
+    if let Ok((_, stack)) = material_query.get_mut(picking.hovered) {
+        let color_state = if stack.top() == Some(ColorState::Selected) {
+            ColorState::SelectedAndHovered
+        } else {
+            ColorState::Hovered
+        };
         push_color(
             picking.hovered,
-            ColorState::Hover,
+            color_state,
             &ui_materials,
             &mut material_query,
         );
-    }
+    };
 }

@@ -12,6 +12,7 @@ pub const CREAMSICLE_ORANGE: &str = "#FA821E";
 pub const AMBER_ORANGE: &str = "#E49B5D";
 pub const COOL_BLUE: &str = "#7B9695";
 pub const SAGE_GREEN: &str = "#78997A";
+pub const DARK_SAGE: &str = "#253333";
 pub const GOLD_YELLOW: &str = "#EBC06D";
 
 pub fn color_from_hex(hex: &str) -> Color {

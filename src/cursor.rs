@@ -1,3 +1,4 @@
+use bevy::ecs::entity;
 use bevy::input::common_conditions::input_pressed;
 use bevy::prelude::*;
 
@@ -108,42 +109,53 @@ pub fn pick_mesh(mut ray_cast: MeshRayCast, mut picking: ResMut<Picking>) {
 
 pub fn select_mesh(
     mut commands: Commands,
-    mut ray_cast: MeshRayCast,
     picking: ResMut<Picking>,
     keyboard: Res<ButtonInput<KeyCode>>,
     selected_query: Query<Entity, With<Selected>>,
     mut material_query: Query<(&mut MeshMaterial3d<StandardMaterial>, &mut ColorStack)>,
     ui_materials: Res<UIMaterials>,
 ) {
-    let Some((entity, _)) = ray_cast
-        .cast_ray(picking.ray, &MeshRayCastSettings::default())
-        .first()
-    else {
-        return;
-    };
+    let entity = picking.hovered;
 
-    commands.entity(*entity).insert(Selected);
-    // Change material of selected entity
-    push_color(
-        *entity,
-        ColorState::Selected,
-        &ui_materials,
-        &mut material_query,
-    );
+    // Deselect other entities
     let is_chain_select = keyboard.pressed(KeyCode::ShiftLeft)
         || keyboard.pressed(KeyCode::ShiftRight)
         || keyboard.pressed(KeyCode::ControlLeft)
         || keyboard.pressed(KeyCode::ControlRight);
     if !is_chain_select {
-        // Deselect other entities
         for selected_entity in selected_query.iter() {
-            if selected_entity == *entity {
+            if selected_entity == entity {
                 continue;
             }
             commands.entity(selected_entity).remove::<Selected>();
-            update_material(selected_entity, &ui_materials, &mut material_query);
+            pop_color(selected_entity, &ui_materials, &mut material_query);
         }
     }
+
+    if entity == Entity::PLACEHOLDER {
+        return;
+    }
+
+    commands.entity(entity).insert(Selected);
+
+    // Pop hover color from entity
+    pop_color(entity, &ui_materials, &mut material_query);
+
+    // Push selected color
+    push_color(
+        entity,
+        ColorState::Selected,
+        &ui_materials,
+        &mut material_query,
+    );
+
+    // Push hover color back to top
+    push_color(
+        entity,
+        ColorState::Hover,
+        &ui_materials,
+        &mut material_query,
+    );
 }
 
 pub fn pick_pressed_mesh(
@@ -160,7 +172,7 @@ pub fn pick_pressed_mesh(
     };
     picking.pressed = *entity;
     commands.entity(picking.pressed).insert(Selected);
-    println!("pressed entity: {:?}", *entity);
+    // println!("pressed entity: {:?}", *entity);
 }
 
 pub fn update_material(
@@ -226,14 +238,22 @@ pub fn handle_hover(
     mut material_query: Query<(&mut MeshMaterial3d<StandardMaterial>, &mut ColorStack)>,
 ) {
     // TODO: Rework hovering
+
     if picking.prev_hovered == picking.hovered {
         return;
     }
-    if picking.prev_hovered != Entity::PLACEHOLDER {
-        // TODO: Not popping properly
-        pop_color(picking.hovered, &ui_materials, &mut material_query);
+    if picking.prev_hovered != Entity::PLACEHOLDER && picking.prev_hovered != picking.hovered {
+        println!(
+            "Popping - hovered:{:?}, prev_hovered:{:?}",
+            picking.hovered, picking.prev_hovered
+        );
+        pop_color(picking.prev_hovered, &ui_materials, &mut material_query);
     }
     if picking.hovered != Entity::PLACEHOLDER {
+        println!(
+            "Pushing - hovered:{:?}, prev_hovered:{:?}",
+            picking.hovered, picking.prev_hovered
+        );
         push_color(
             picking.hovered,
             ColorState::Hover,
@@ -242,20 +262,3 @@ pub fn handle_hover(
         );
     }
 }
-
-// pub fn update_dots_to_default_material(
-//     mut picking: ResMut<Picking>,
-//     ui_materials: Res<UIMaterials>,
-//     mut dots: Query<&mut MeshMaterial3d<StandardMaterial>, With<Dot>>,
-// ) {
-//     if picking.prev_hovered == picking.hovered || picking.prev_hovered == Entity::PLACEHOLDER {
-//         return;
-//     }
-//
-//     if let Ok(mut material) = dots.get_mut(picking.prev_hovered) {
-//         material.0 = ui_materials.dot.clone();
-//     } else {
-//         return;
-//     };
-//     picking.prev_hovered = Entity::PLACEHOLDER;
-// }
